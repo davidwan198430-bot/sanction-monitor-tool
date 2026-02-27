@@ -36,23 +36,24 @@ st.markdown("""
         padding: 24px 0;
         width: 220px !important;
     }
-    .nav-item {
+    
+    /* 导航按钮样式 */
+    div[data-testid="stButton"][key*="nav_"] button {
+        width: 100%;
+        background-color: #2B3A48;
+        color: white;
+        border: none;
+        text-align: left;
         padding: 12px 24px;
-        color: #C9D1D9;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        border-left: 3px solid transparent;
         margin: 4px 0;
+        border-left: 3px solid transparent;
     }
-    .nav-item:hover {
-        background-color: #374758;
-        color: white;
-    }
-    .nav-item.active {
+    div[data-testid="stButton"][key*="nav_"].active button {
         background-color: #165DFF;
-        color: white;
         border-left: 3px solid #4096FF;
+    }
+    div[data-testid="stButton"][key*="nav_"] button:hover {
+        background-color: #374758;
     }
     
     /* 右侧内容区容器 */
@@ -106,81 +107,53 @@ st.markdown("""
         color: #4E5969;
     }
     
-    /* 按钮样式（通过key定位，替代class_） */
-    /* 主按钮 */
-    div[data-testid="stButton"][key*="primary"] button {
+    /* 按钮样式（通过key定位） */
+    /* 主按钮（primary） */
+    div[data-testid="stButton"][key*="_primary"] button {
         border: none;
         border-radius: 6px;
         padding: 10px 20px;
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         width: 100%;
         background-color: #165DFF;
         color: white;
     }
-    div[data-testid="stButton"][key*="primary"] button:hover {
+    div[data-testid="stButton"][key*="_primary"] button:hover {
         background-color: #0E42CC;
     }
     
-    /* 成功按钮（开启监控） */
-    div[data-testid="stButton"][key*="success"] button {
+    /* 成功按钮（success） */
+    div[data-testid="stButton"][key*="_success"] button {
         border: none;
         border-radius: 6px;
         padding: 10px 20px;
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         width: 100%;
         background-color: #00B42A;
         color: white;
     }
-    div[data-testid="stButton"][key*="success"] button:hover {
+    div[data-testid="stButton"][key*="_success"] button:hover {
         background-color: #009A22;
     }
     
-    /* 危险按钮（停止监控/删除） */
-    div[data-testid="stButton"][key*="danger"] button {
+    /* 危险按钮（danger） */
+    div[data-testid="stButton"][key*="_danger"] button {
         border: none;
         border-radius: 6px;
         padding: 10px 20px;
         font-size: 14px;
         font-weight: 500;
         cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
         width: 100%;
         background-color: #F53F3F;
         color: white;
     }
-    div[data-testid="stButton"][key*="danger"] button:hover {
+    div[data-testid="stButton"][key*="_danger"] button:hover {
         background-color: #D92D20;
-    }
-    
-    /* 导航按钮 */
-    div[data-testid="stButton"][key*="nav_"] button {
-        width: 100%;
-        background-color: #2B3A48;
-        color: white;
-        border: none;
-        text-align: left;
-        padding: 12px 24px;
-        margin: 4px 0;
-        border-left: 3px solid transparent;
-    }
-    div[data-testid="stButton"][key*="nav_"].active button {
-        background-color: #165DFF;
-        border-left: 3px solid #4096FF;
-    }
-    div[data-testid="stButton"][key*="nav_"] button:hover {
-        background-color: #374758;
     }
     
     /* 表格样式（后台风格） */
@@ -204,7 +177,7 @@ st.markdown("""
     }
     .data-table tr:hover {background-color: #F7F8FA;}
     
-    /* 操作按钮（表格内对称） */
+    /* 操作按钮（表格内） */
     .op-btn {
         padding: 6px 10px;
         border-radius: 4px;
@@ -230,17 +203,16 @@ st.markdown("""
     .log-error {color: #F53F3F;}
     .log-info {color: #165DFF;}
     
-    /* 隐藏Streamlit默认元素 */
-    .stSidebarHeader {display: none;}
-    .stSidebarFooter {display: none;}
+    /* 隐藏默认元素 */
+    .stSidebarHeader, .stSidebarFooter {display: none;}
     .block-container {padding: 0 !important;}
 </style>
 """, unsafe_allow_html=True)
 
 # ===================== 2. 全局会话状态初始化 =====================
-# 核心状态（页面切换改用原生session_state，无JS依赖）
+# 核心状态
 if "active_module" not in st.session_state:
-    st.session_state.active_module = "监控面板"  # 默认模块：监控面板
+    st.session_state.active_module = "监控面板"
 if "monitor_running" not in st.session_state:
     st.session_state.monitor_running = False
 if "monitor_interval" not in st.session_state:
@@ -250,9 +222,9 @@ if "time_range_days" not in st.session_state:
 if "sent_content_hash" not in st.session_state:
     st.session_state.sent_content_hash = set()
 if "system_logs" not in st.session_state:
-    st.session_state.system_logs = []  # 系统日志
+    st.session_state.system_logs = []
 
-# 主域名配置（带唯一ID）
+# 主域名配置
 if "main_domains" not in st.session_state:
     st.session_state.main_domains = [
         {"id": str(uuid.uuid4()), "name": "商务部官网", "url": "https://www.mofcom.gov.cn/", "remark": ""},
@@ -263,7 +235,7 @@ if "main_domains" not in st.session_state:
         {"id": str(uuid.uuid4()), "name": "海关总署官网", "url": "https://www.customs.gov.cn/", "remark": ""}
     ]
 
-# 关键词配置（带唯一ID）
+# 关键词配置
 if "keywords" not in st.session_state:
     st.session_state.keywords = [
         {"id": str(uuid.uuid4()), "content": "制裁"},
@@ -285,23 +257,21 @@ if "email_config" not in st.session_state:
     }
 
 # ===================== 3. 核心工具函数 =====================
-# 系统日志函数（带级别）
 def add_system_log(message, level="info"):
+    """添加系统日志"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"[{timestamp}] {message}"
     st.session_state.system_logs.append((log_entry, level))
-    if len(st.session_state.system_logs) > 200:  # 保留最新200条
+    if len(st.session_state.system_logs) > 200:
         st.session_state.system_logs = st.session_state.system_logs[-200:]
 
-# 提取主域名下所有相关子链接（无数量限制）
 def extract_sub_links(main_url):
+    """提取主域名下相关子链接"""
     filter_keywords = ["制裁", "反制", "出口管制", "实体清单", "公告", "政策", "sanctions", "export control"]
     invalid_patterns = [".jpg", ".png", ".pdf", ".doc", ".xls", "login", "register", "logout"]
     
     sub_links = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
     
     try:
         response = requests.get(main_url, headers=headers, timeout=15, verify=False)
@@ -326,8 +296,8 @@ def extract_sub_links(main_url):
         add_system_log(f"❌ 提取【{main_url}】子链接失败：{str(e)}", "error")
         return [main_url]
 
-# 提取发布时间
 def extract_publish_time(text, url):
+    """提取内容发布时间"""
     time_patterns = [r'(\d{4})[-/年](\d{2})[-/月](\d{2})日?', r'(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2})']
     for pattern in time_patterns:
         match = re.search(pattern, text)
@@ -339,13 +309,13 @@ def extract_publish_time(text, url):
                 continue
     return datetime.now()
 
-# 时间范围筛选
 def is_within_time_range(publish_time):
+    """判断是否在监控时间范围内"""
     cutoff_time = datetime.now() - timedelta(days=st.session_state.time_range_days)
     return publish_time >= cutoff_time
 
-# 发送带Excel的邮件
 def send_email_with_excel(excel_path):
+    """发送带Excel附件的邮件"""
     if not excel_path:
         add_system_log("⚠️ 无Excel文件，跳过邮件发送", "info")
         return
@@ -380,7 +350,7 @@ def send_email_with_excel(excel_path):
         with smtplib.SMTP_SSL(st.session_state.email_config["smtp_server"], 
                               st.session_state.email_config["smtp_port"]) as server:
             server.login(st.session_state.email_config["sender_email"], 
-                         st.session_state.email_config["sender_password"])
+                        st.session_state.email_config["sender_password"])
             server.sendmail(st.session_state.email_config["sender_email"], 
                             st.session_state.email_config["receiver_email"], 
                             msg.as_string())
@@ -392,8 +362,8 @@ def send_email_with_excel(excel_path):
         add_system_log(f"❌ 邮件发送失败：{str(e)}", "error")
         st.error(f"❌ 邮件发送失败：{str(e)}")
 
-# 生成Excel报表
 def generate_excel(data):
+    """生成Excel报表"""
     if not data:
         add_system_log("ℹ️ 未抓取到符合条件的内容，不生成Excel", "info")
         return None
@@ -405,8 +375,8 @@ def generate_excel(data):
     add_system_log(f"📊 Excel报表生成成功：{excel_filename}", "success")
     return excel_filename
 
-# 核心抓取筛选逻辑
 def crawl_and_filter():
+    """核心抓取筛选逻辑"""
     result_data = []
     add_system_log("🔍 开始执行监控任务", "info")
     
@@ -471,8 +441,8 @@ def crawl_and_filter():
     add_system_log(f"🔍 监控任务完成，有效数据：{len(result_data)} 条", "info")
     return result_data
 
-# 监控主循环
 def monitor_loop():
+    """监控主循环"""
     while st.session_state.monitor_running:
         monitor_data = crawl_and_filter()
         excel_path = generate_excel(monitor_data)
@@ -486,29 +456,26 @@ def monitor_loop():
             add_system_log(f"⏱️ 下次监控将在 {i} 秒后执行", "info")
             time.sleep(1)
 
-# ===================== 4. 页面渲染函数（模块化+对称） =====================
-# 4.1 左侧导航栏（常驻）
+# ===================== 4. 页面渲染函数 =====================
 def render_sidebar():
+    """渲染左侧导航栏"""
     with st.sidebar:
         st.markdown("<div style='text-align: center; padding: 20px 0;'>", unsafe_allow_html=True)
         st.markdown("<h3 style='color: white;'>🚨 制裁监控平台</h3>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
-        # 导航项（点击切换模块，原生session_state无JS依赖）
+        # 导航项
         nav_items = ["监控面板", "配置中心", "报表管理", "系统日志"]
         for item in nav_items:
-            is_active = "active" if st.session_state.active_module == item else ""
-            # 修复：移除class_，改用key定位样式
+            is_active = st.session_state.active_module == item
+            # 导航按钮
             if st.button(item, key=f"nav_{item}", 
                         on_click=lambda x=item: setattr(st.session_state, "active_module", x)):
                 st.session_state.active_module = item
-            # 动态添加active样式
+            # 激活样式
             if is_active:
                 st.markdown(f"""
                 <style>
-                    div[data-testid="stButton"][key="nav_{item}"] {{
-                        background-color: #165DFF !important;
-                    }}
                     div[data-testid="stButton"][key="nav_{item}"] button {{
                         background-color: #165DFF !important;
                         border-left: 3px solid #4096FF !important;
@@ -516,12 +483,12 @@ def render_sidebar():
                 </style>
                 """, unsafe_allow_html=True)
 
-# 4.2 监控面板（默认模块，对称布局）
 def render_monitor_panel():
+    """渲染监控面板"""
     st.markdown("<div class='main-content'>", unsafe_allow_html=True)
     st.markdown("<div class='module-title'>🏠 监控面板</div>", unsafe_allow_html=True)
     
-    # 第一行：核心指标（3列对称）
+    # 核心指标（3列对称）
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("<div class='card metric-card'>", unsafe_allow_html=True)
@@ -542,7 +509,7 @@ def render_monitor_panel():
         st.markdown("<div class='metric-label'>分钟/次</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 第二行：监控控制（2列对称）
+    # 监控控制（2列对称）
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -553,7 +520,7 @@ def render_monitor_panel():
         status_color = "#00B42A" if st.session_state.monitor_running else "#F53F3F"
         st.markdown(f"<div style='font-size: 16px; color: {status_color}; margin-bottom: 16px;'>{status_text}</div>", unsafe_allow_html=True)
         
-        # 控制按钮（对称）- 修复：移除class_，改用key+CSS定位样式
+        # 控制按钮
         btn_col1, btn_col2 = st.columns(2)
         with btn_col1:
             if st.button("▶️ 开启监控", key="start_monitor_success", 
@@ -575,16 +542,16 @@ def render_monitor_panel():
         st.write(f"• 日志条数：{len(st.session_state.system_logs)} 条")
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
+    
     with col2:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-header'>📋 监控参数快捷配置</div>", unsafe_allow_html=True)
         
-        # 快捷配置（对称）
+        # 快捷配置
         time_range = st.selectbox("监控时长范围", ["1天", "3天", "7天", "30天"],
                                  index=["1天", "3天", "7天", "30天"].index(f"{st.session_state.time_range_days}天"))
         monitor_interval = st.slider("执行频率（分钟）", 1, 60, st.session_state.monitor_interval//60)
         
-        # 修复：移除class_，改用key+CSS定位
         if st.button("💾 保存参数", key="save_param_primary"):
             st.session_state.time_range_days = int(time_range.replace("天", ""))
             st.session_state.monitor_interval = monitor_interval * 60
@@ -592,7 +559,7 @@ def render_monitor_panel():
             st.success("✅ 参数保存成功！")
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 第三行：实时监控日志（通栏）
+    # 实时监控日志
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("<div class='card-header'>📜 实时监控日志</div>", unsafe_allow_html=True)
     
@@ -613,105 +580,113 @@ def render_monitor_panel():
     if st.session_state.monitor_running:
         monitor_loop()
 
-# 4.3 配置中心（模块化表格，对称布局）
 def render_config_center():
+    """渲染配置中心"""
     st.markdown("<div class='main-content'>", unsafe_allow_html=True)
     st.markdown("<div class='module-title'>⚙️ 配置中心</div>", unsafe_allow_html=True)
     
-    # 配置标签页（4个对称标签）
+    # 配置标签页
     tab1, tab2, tab3, tab4 = st.tabs(["🌐 主域名配置", "🔑 关键词配置", "📧 邮箱配置", "⏱️ 高级参数"])
     
-    # 4.3.1 主域名配置（表格+操作列）
+    # 1. 主域名配置
     with tab1:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-header'>主域名管理</div>", unsafe_allow_html=True)
         
-        # 新增主域名（对称表单）
+        # 新增主域名表单（修复：缩进正确）
         col1, col2, col3 = st.columns([2, 2, 1])
         with col1:
-            new_domain_name = st.text_input("新增主域名名称", placeholder="如：商务部官网")
+            new_domain_name = st.text_input("新增主域名名称", placeholder="如：商务部官网", key="new_domain_name")
         with col2:
-            new_domain_url = st.text_input("新增主域名URL", placeholder="如：https://www.mofcom.gov.cn/")
+            new_domain_url = st.text_input("新增主域名URL", placeholder="如：https://www.mofcom.gov.cn/", key="new_domain_url")
         with col3:
-            new_domain_remark = st.text_input("备注（可选）", placeholder="手动子链接，逗号分隔")
-    # 修复：移除class_，改用key+CSS定位
-    if st.button("➕ 添加主域名", key="add_domain_primary"):
-        if new_domain_name and new_domain_url:
-            st.session_state.main_domains.append({
-                "id": str(uuid.uuid4()),
-                "name": new_domain_name,
-                "url": new_domain_url,
-                "remark": new_domain_remark
-            })
-            add_system_log(f"✅ 新增主域名：{new_domain_name}", "success")
-            st.success("✅ 主域名添加成功！")
-            st.rerun()
-        else:
-            st.error("❌ 名称和URL不能为空！")
-    
-    st.markdown("<hr>", unsafe_allow_html=True)
-    
-    # 主域名表格（后台风格，操作列对称）
-    if st.session_state.main_domains:
-        table_data = []
-        for idx, domain in enumerate(st.session_state.main_domains):
-            # 操作按钮（对称）
-            op_buttons = f"""
-            <button class='op-btn op-edit' onclick="document.getElementById('edit_domain_{domain['id']}').click()">✏️ 修改</button>
-            <button class='op-btn op-delete' onclick="document.getElementById('del_domain_{domain['id']}').click()">🗑️ 删除</button>
-            """
-            table_data.append({
-                "序号": idx+1,
-                "主域名名称": domain["name"],
-                "URL": domain["url"],
-                "备注": domain["remark"],
-                "操作": op_buttons
-            })
+            new_domain_remark = st.text_input("备注（可选）", placeholder="手动子链接，逗号分隔", key="new_domain_remark")
         
-        # 显示表格
-        df_domains = pd.DataFrame(table_data)
-        st.markdown(df_domains.to_html(escape=False, index=False, classes="data-table"), unsafe_allow_html=True)
-        
-        # 修改/删除逻辑（原生Streamlit，无JS依赖）
-        for domain in st.session_state.main_domains:
-            # 修改表单
-            with st.expander(f"修改主域名：{domain['name']}", expanded=False, key=f"edit_domain_{domain['id']}"):
-                edit_name = st.text_input("新名称", value=domain["name"], key=f"edit_name_{domain['id']}")
-                edit_url = st.text_input("新URL", value=domain["url"], key=f"edit_url_{domain['id']}")
-                edit_remark = st.text_input("新备注", value=domain["remark"], key=f"edit_remark_{domain['id']}")
-                # 修复：移除class_，改用key+CSS定位
-                if st.button("保存修改", key=f"save_domain_{domain['id']}_primary"):
-                    for item in st.session_state.main_domains:
-                        if item["id"] == domain["id"]:
-                            item["name"] = edit_name
-                            item["url"] = edit_url
-                            item["remark"] = edit_remark
-                            break
-                    add_system_log(f"✅ 修改主域名：{edit_name}", "success")
-                    st.success("✅ 主域名修改成功！")
-                    st.rerun()
-            
-            # 删除按钮（隐藏，通过ID触发）
-            if st.button(f"删除_{domain['id']}", key=f"del_domain_{domain['id']}_danger", style={"display": "none"}):
-                st.session_state.main_domains = [d for d in st.session_state.main_domains if d["id"] != domain["id"]]
-                add_system_log(f"🗑️ 删除主域名：{domain['name']}", "info")
-                st.success(f"✅ 删除主域名：{domain['name']}")
+        # 添加按钮（修复：在tab1的with块内）
+        if st.button("➕ 添加主域名", key="add_domain_primary"):
+            if new_domain_name and new_domain_url:
+                st.session_state.main_domains.append({
+                    "id": str(uuid.uuid4()),
+                    "name": new_domain_name,
+                    "url": new_domain_url,
+                    "remark": new_domain_remark
+                })
+                add_system_log(f"✅ 新增主域名：{new_domain_name}", "success")
+                st.success("✅ 主域名添加成功！")
                 st.rerun()
-    else:
-        st.markdown("<div style='text-align: center; padding: 20px; color: #86909C;'>暂无主域名配置</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                st.error("❌ 名称和URL不能为空！")
+        
+        st.markdown("<hr>", unsafe_allow_html=True)
+        
+        # 主域名列表
+        if st.session_state.main_domains:
+            # 构建表格数据
+            table_data = []
+            for idx, domain in enumerate(st.session_state.main_domains):
+                op_buttons = f"""
+                <button class='op-btn op-edit' onclick="document.getElementById('edit_btn_{domain['id']}').click()">✏️ 修改</button>
+                <button class='op-btn op-delete' onclick="document.getElementById('del_btn_{domain['id']}').click()">🗑️ 删除</button>
+                """
+                table_data.append({
+                    "序号": idx+1,
+                    "主域名名称": domain["name"],
+                    "URL": domain["url"],
+                    "备注": domain["remark"],
+                    "操作": op_buttons
+                })
+            
+            # 显示表格
+            df_domains = pd.DataFrame(table_data)
+            st.markdown(df_domains.to_html(escape=False, index=False, classes="data-table"), unsafe_allow_html=True)
+            
+            # 修改/删除逻辑（修复：Expander缩进正确）
+            for domain in st.session_state.main_domains:
+                # 隐藏的修改触发按钮
+                st.button("修改触发", key=f"edit_btn_{domain['id']}", style={"display": "none"})
+                # 隐藏的删除触发按钮
+                st.button("删除触发", key=f"del_btn_{domain['id']}", style={"display": "none"})
+                
+                # 修改Expander（修复：key简化+缩进正确）
+                if st.session_state.get(f"edit_btn_{domain['id']}", False):
+                    with st.expander(f"修改主域名：{domain['name']}", expanded=True):
+                        edit_name = st.text_input("新名称", value=domain["name"], key=f"edit_name_{domain['id']}")
+                        edit_url = st.text_input("新URL", value=domain["url"], key=f"edit_url_{domain['id']}")
+                        edit_remark = st.text_input("新备注", value=domain["remark"], key=f"edit_remark_{domain['id']}")
+                        
+                        if st.button("保存修改", key=f"save_domain_{domain['id']}_primary"):
+                            for item in st.session_state.main_domains:
+                                if item["id"] == domain["id"]:
+                                    item["name"] = edit_name
+                                    item["url"] = edit_url
+                                    item["remark"] = edit_remark
+                                    break
+                            add_system_log(f"✅ 修改主域名：{edit_name}", "success")
+                            st.success("✅ 主域名修改成功！")
+                            st.rerun()
+                
+                # 删除逻辑
+                if st.session_state.get(f"del_btn_{domain['id']}", False):
+                    if st.button(f"确认删除 {domain['name']}", key=f"confirm_del_{domain['id']}_danger"):
+                        st.session_state.main_domains = [d for d in st.session_state.main_domains if d["id"] != domain["id"]]
+                        add_system_log(f"🗑️ 删除主域名：{domain['name']}", "info")
+                        st.success(f"✅ 删除主域名：{domain['name']}")
+                        st.rerun()
+        else:
+            st.markdown("<div style='text-align: center; padding: 20px; color: #86909C;'>暂无主域名配置</div>", unsafe_allow_html=True)
+        
+        st.markdown("</div>", unsafe_allow_html=True)
     
-    # 4.3.2 关键词配置（对称表格）
+    # 2. 关键词配置
     with tab2:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-header'>关键词管理</div>", unsafe_allow_html=True)
         
-        # 新增关键词（对称）
+        # 新增关键词
         col1, col2 = st.columns([3, 1])
         with col1:
-            new_keyword = st.text_input("新增关键词", placeholder="如：制裁 / sanctions")
+            new_keyword = st.text_input("新增关键词", placeholder="如：制裁 / sanctions", key="new_keyword")
         with col2:
-            # 修复：移除class_，改用key+CSS定位
             if st.button("➕ 添加关键词", key="add_kw_primary"):
                 if new_keyword and new_keyword not in [k["content"] for k in st.session_state.keywords]:
                     st.session_state.keywords.append({"id": str(uuid.uuid4()), "content": new_keyword})
@@ -725,13 +700,13 @@ def render_config_center():
         
         st.markdown("<hr>", unsafe_allow_html=True)
         
-        # 关键词表格（对称）
+        # 关键词列表
         if st.session_state.keywords:
             table_data = []
             for idx, kw in enumerate(st.session_state.keywords):
                 op_buttons = f"""
-                <button class='op-btn op-edit' onclick="document.getElementById('edit_kw_{kw['id']}').click()">✏️ 修改</button>
-                <button class='op-btn op-delete' onclick="document.getElementById('del_kw_{kw['id']}').click()">🗑️ 删除</button>
+                <button class='op-btn op-edit' onclick="document.getElementById('edit_kw_btn_{kw['id']}').click()">✏️ 修改</button>
+                <button class='op-btn op-delete' onclick="document.getElementById('del_kw_btn_{kw['id']}').click()">🗑️ 删除</button>
                 """
                 table_data.append({
                     "序号": idx+1,
@@ -744,45 +719,56 @@ def render_config_center():
             
             # 修改/删除逻辑
             for kw in st.session_state.keywords:
-                with st.expander(f"修改关键词：{kw['content']}", expanded=False, key=f"edit_kw_{kw['id']}"):
-                    edit_kw = st.text_input("新关键词", value=kw["content"], key=f"edit_kw_{kw['id']}")
-                    # 修复：移除class_，改用key+CSS定位
-                    if st.button("保存修改", key=f"save_kw_{kw['id']}_primary"):
-                        if edit_kw:
-                            for item in st.session_state.keywords:
-                                if item["id"] == kw["id"]:
-                                    item["content"] = edit_kw
-                                    break
-                            add_system_log(f"✅ 修改关键词：{edit_kw}", "success")
-                            st.success("✅ 关键词修改成功！")
-                            st.rerun()
+                st.button("修改触发", key=f"edit_kw_btn_{kw['id']}", style={"display": "none"})
+                st.button("删除触发", key=f"del_kw_btn_{kw['id']}", style={"display": "none"})
                 
-                if st.button(f"删除_kw_{kw['id']}", key=f"del_kw_{kw['id']}_danger", style={"display": "none"}):
-                    st.session_state.keywords = [k for k in st.session_state.keywords if k["id"] != kw["id"]]
-                    add_system_log(f"🗑️ 删除关键词：{kw['content']}", "info")
-                    st.success(f"✅ 删除关键词：{kw['content']}")
-                    st.rerun()
+                if st.session_state.get(f"edit_kw_btn_{kw['id']}", False):
+                    with st.expander(f"修改关键词：{kw['content']}", expanded=True):
+                        edit_kw = st.text_input("新关键词", value=kw["content"], key=f"edit_kw_{kw['id']}")
+                        if st.button("保存修改", key=f"save_kw_{kw['id']}_primary"):
+                            if edit_kw:
+                                for item in st.session_state.keywords:
+                                    if item["id"] == kw["id"]:
+                                        item["content"] = edit_kw
+                                        break
+                                add_system_log(f"✅ 修改关键词：{edit_kw}", "success")
+                                st.success("✅ 关键词修改成功！")
+                                st.rerun()
+                
+                if st.session_state.get(f"del_kw_btn_{kw['id']}", False):
+                    if st.button(f"确认删除 {kw['content']}", key=f"confirm_del_kw_{kw['id']}_danger"):
+                        st.session_state.keywords = [k for k in st.session_state.keywords if k["id"] != kw["id"]]
+                        add_system_log(f"🗑️ 删除关键词：{kw['content']}", "info")
+                        st.success(f"✅ 删除关键词：{kw['content']}")
+                        st.rerun()
         else:
             st.markdown("<div style='text-align: center; padding: 20px; color: #86909C;'>暂无关键词配置</div>", unsafe_allow_html=True)
+        
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 4.3.3 邮箱配置（对称表单）
+    # 3. 邮箱配置
     with tab3:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-header'>邮箱配置</div>", unsafe_allow_html=True)
         
-        # 邮箱配置表单（2列对称）
+        # 邮箱配置表单
         col1, col2 = st.columns(2)
         with col1:
-            smtp_server = st.text_input("SMTP服务器", value=st.session_state.email_config["smtp_server"], placeholder="如：smtp.exmail.qq.com")
-            smtp_port = st.number_input("SMTP端口", value=st.session_state.email_config["smtp_port"], min_value=1, max_value=65535)
-            sender_email = st.text_input("发件邮箱", value=st.session_state.email_config["sender_email"], placeholder="your@company.com")
+            smtp_server = st.text_input("SMTP服务器", value=st.session_state.email_config["smtp_server"], 
+                                       placeholder="如：smtp.exmail.qq.com", key="smtp_server")
+            smtp_port = st.number_input("SMTP端口", value=st.session_state.email_config["smtp_port"], 
+                                       min_value=1, max_value=65535, key="smtp_port")
+            sender_email = st.text_input("发件邮箱", value=st.session_state.email_config["sender_email"], 
+                                        placeholder="your@company.com", key="sender_email")
         with col2:
-            sender_password = st.text_input("SMTP授权码", type="password", value=st.session_state.email_config["sender_password"], placeholder="邮箱授权码（非登录密码）")
-            receiver_email = st.text_input("收件邮箱", value=st.session_state.email_config["receiver_email"], placeholder="recipient@company.com")
-            st.markdown("<br>", unsafe_allow_html=True)  # 对称留白
+            sender_password = st.text_input("SMTP授权码", type="password", 
+                                           value=st.session_state.email_config["sender_password"], 
+                                           placeholder="邮箱授权码（非登录密码）", key="sender_password")
+            receiver_email = st.text_input("收件邮箱", value=st.session_state.email_config["receiver_email"], 
+                                          placeholder="recipient@company.com", key="receiver_email")
+            st.markdown("<br>", unsafe_allow_html=True)
         
-        # 修复：移除class_，改用key+CSS定位
+        # 保存邮箱配置
         if st.button("💾 保存邮箱配置", key="save_email_primary"):
             st.session_state.email_config = {
                 "smtp_server": smtp_server,
@@ -803,12 +789,12 @@ def render_config_center():
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 4.3.4 高级参数配置（对称）
+    # 4. 高级参数配置
     with tab4:
         st.markdown("<div class='card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-header'>高级监控参数</div>", unsafe_allow_html=True)
         
-        # 高级参数（2列对称）
+        # 高级参数
         col1, col2 = st.columns(2)
         with col1:
             timeout = st.number_input("请求超时时间（秒）", value=15, min_value=5, max_value=60, key="req_timeout")
@@ -817,33 +803,32 @@ def render_config_center():
             log_keep = st.number_input("日志保留条数", value=200, min_value=50, max_value=1000, key="log_keep")
             excel_engine = st.selectbox("Excel引擎", ["openpyxl", "xlsxwriter"], key="excel_engine")
         
-        # 修复：移除class_，改用key+CSS定位
         if st.button("💾 保存高级参数", key="save_advanced_primary"):
             add_system_log("✅ 保存高级参数配置", "success")
             st.success("✅ 高级参数保存成功！")
         
         st.markdown("</div>", unsafe_allow_html=True)
+    
     st.markdown("</div>", unsafe_allow_html=True)
 
-# 4.4 报表管理（对称布局）
 def render_report_management():
+    """渲染报表管理"""
     st.markdown("<div class='main-content'>", unsafe_allow_html=True)
     st.markdown("<div class='module-title'>📁 报表管理</div>", unsafe_allow_html=True)
     
-    # 报表筛选（2列对称）
+    # 报表筛选
     col1, col2 = st.columns(2)
     with col1:
-        date_filter = st.date_input("筛选日期", value=datetime.now())
+        date_filter = st.date_input("筛选日期", value=datetime.now(), key="report_date_filter")
     with col2:
-        file_type = st.selectbox("文件类型", ["所有Excel", "制裁监控报表"])
+        file_type = st.selectbox("文件类型", ["所有Excel", "制裁监控报表"], key="report_file_type")
     
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("<div class='card-header'>报表列表</div>", unsafe_allow_html=True)
     
-    # 报表列表（对称表格）
+    # 报表列表
     excel_files = [f for f in os.listdir(".") if f.endswith(".xlsx") and "制裁监控报表" in f]
     if excel_files:
-        # 筛选逻辑
         filtered_files = []
         for file in excel_files:
             file_date = datetime.fromtimestamp(os.path.getctime(file)).date()
@@ -853,13 +838,11 @@ def render_report_management():
         if filtered_files:
             table_data = []
             for idx, file in enumerate(filtered_files):
-                file_size = round(os.path.getsize(file) / 1024, 2)  # KB
+                file_size = round(os.path.getsize(file) / 1024, 2)
                 create_time = datetime.fromtimestamp(os.path.getctime(file)).strftime('%Y-%m-%d %H:%M:%S')
-                # 操作按钮（对称）
                 op_buttons = f"""
-                <button class='btn btn-success' onclick="this.parentElement.querySelector('a').click()">📥 下载</button>
-                <button class='btn btn-danger' onclick="document.getElementById('del_file_{idx}').click()">🗑️ 删除</button>
-                <a href='#' download='{file}' style='display: none;'>下载</a>
+                <button class='op-btn op-edit' onclick="document.getElementById('download_file_{idx}').click()">📥 下载</button>
+                <button class='op-btn op-delete' onclick="document.getElementById('del_file_{idx}').click()">🗑️ 删除</button>
                 """
                 table_data.append({
                     "序号": idx+1,
@@ -872,8 +855,20 @@ def render_report_management():
             df_reports = pd.DataFrame(table_data)
             st.markdown(df_reports.to_html(escape=False, index=False, classes="data-table"), unsafe_allow_html=True)
             
-            # 删除文件逻辑
+            # 下载/删除逻辑
             for idx, file in enumerate(filtered_files):
+                # 下载按钮
+                with open(file, "rb") as f:
+                    st.download_button(
+                        label="下载",
+                        data=f,
+                        file_name=file,
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key=f"download_file_{idx}",
+                        style={"display": "none"}
+                    )
+                
+                # 删除按钮
                 if st.button(f"删除文件_{idx}", key=f"del_file_{idx}_danger", style={"display": "none"}):
                     try:
                         os.remove(file)
@@ -891,19 +886,17 @@ def render_report_management():
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# 4.5 系统日志（对称布局）
 def render_system_logs():
+    """渲染系统日志"""
     st.markdown("<div class='main-content'>", unsafe_allow_html=True)
     st.markdown("<div class='module-title'>📜 系统日志</div>", unsafe_allow_html=True)
     
-    # 日志筛选（2列对称）
+    # 日志筛选
     col1, col2 = st.columns(2)
     with col1:
-        log_level = st.selectbox("日志级别", ["所有", "成功", "错误", "信息"])
+        log_level = st.selectbox("日志级别", ["所有", "成功", "错误", "信息"], key="log_level_filter")
     with col2:
-        # 修复：移除class_，改用key+CSS定位
-        clear_logs = st.button("🗑️ 清空日志", key="clear_logs_danger")
-        if clear_logs:
+        if st.button("🗑️ 清空日志", key="clear_logs_danger"):
             st.session_state.system_logs = []
             add_system_log("✅ 清空系统日志", "info")
             st.success("✅ 日志已清空！")
@@ -911,7 +904,7 @@ def render_system_logs():
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("<div class='card-header'>日志列表</div>", unsafe_allow_html=True)
     
-    # 日志展示（筛选+滚动）
+    # 日志展示
     filtered_logs = st.session_state.system_logs
     if log_level != "所有":
         level_map = {"成功": "success", "错误": "error", "信息": "info"}
@@ -930,12 +923,12 @@ def render_system_logs():
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ===================== 5. 程序入口（模块化渲染） =====================
+# ===================== 5. 程序入口 =====================
 if __name__ == "__main__":
-    # 渲染左侧导航栏
+    # 渲染左侧导航
     render_sidebar()
     
-    # 根据活跃模块渲染对应内容（原生session_state，无JS依赖）
+    # 渲染对应模块
     if st.session_state.active_module == "监控面板":
         render_monitor_panel()
     elif st.session_state.active_module == "配置中心":
