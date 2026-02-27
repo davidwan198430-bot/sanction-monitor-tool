@@ -14,7 +14,7 @@ st.set_page_config(
 )
 
 # ------------------------------
-# 全局状态（新增邮箱配置状态）
+# 全局状态
 # ------------------------------
 # 监控状态
 if "monitor_running" not in st.session_state:
@@ -47,7 +47,7 @@ if "keywords" not in st.session_state:
         {"id": str(uuid.uuid4()), "word": "限制性措施"},{"id": str(uuid.uuid4()), "word": "合规审查"}
     ]
 
-# 邮箱配置（新增核心状态）
+# 邮箱配置
 if "email_config" not in st.session_state:
     st.session_state.email_config = {
         "smtp_server": "",    # SMTP服务器（如smtp.qq.com、smtp.163.com）
@@ -58,7 +58,7 @@ if "email_config" not in st.session_state:
     }
 
 # ------------------------------
-# 邮箱工具函数（新增：测试邮件发送）
+# 邮箱工具函数
 # ------------------------------
 def send_test_email():
     """测试邮箱配置是否可用，发送测试邮件"""
@@ -84,18 +84,16 @@ def send_test_email():
         return False, f"发送失败：{str(e)}"
 
 # ------------------------------
-# 侧边栏（新增邮箱配置导航）
+# 侧边栏（仅保留监控面板、配置中心）
 # ------------------------------
 with st.sidebar:
     st.title("制裁监控平台")
     st.divider()
-    # 页面导航按钮（新增邮箱配置）
+    # 页面导航按钮（移除单独的邮箱配置按钮）
     if st.button("📊 监控面板", use_container_width=True):
         st.session_state.page = "监控"
     if st.button("⚙️ 配置中心", use_container_width=True):
         st.session_state.page = "config"
-    if st.button("📧 邮箱配置", use_container_width=True):
-        st.session_state.page = "email"
     # 默认页面
     st.session_state.setdefault("page", "监控")
 
@@ -127,11 +125,12 @@ if st.session_state.page == "监控":
             st.rerun()
 
 # ------------------------------
-# 2. 配置中心
+# 2. 配置中心（新增邮箱配置标签页，三标签同级）
 # ------------------------------
 elif st.session_state.page == "config":
     st.header("配置中心")
-    tab1, tab2 = st.tabs(["主域名配置", "关键词配置"])
+    # 调整为三个标签页：主域名、关键词、邮箱配置（同级）
+    tab1, tab2, tab3 = st.tabs(["🌐 主域名配置", "🔑 关键词配置", "📧 邮箱配置"])
 
     # 2.1 主域名配置
     with tab1:
@@ -234,93 +233,90 @@ elif st.session_state.page == "config":
                     del st.session_state.edit_kw
                     st.rerun()
 
-# ------------------------------
-# 3. 邮箱配置页面（新增核心功能）
-# ------------------------------
-elif st.session_state.page == "email":
-    st.header("📧 邮箱配置")
-    st.subheader("邮件告警配置（监控触发时自动发送邮件）")
-    st.divider()
-    
-    # 加载已保存的配置
-    config = st.session_state.email_config
-    
-    # 配置表单（分组布局，清晰易填）
-    with st.form("email_config_form"):
-        col1, col2 = st.columns(2)
-        
-        # 左侧：SMTP服务器配置
-        with col1:
-            st.write("### 发件人邮箱配置")
-            smtp_server = st.text_input(
-                "SMTP服务器", 
-                value=config["smtp_server"],
-                placeholder="如：smtp.qq.com / smtp.163.com"
-            )
-            smtp_port = st.number_input(
-                "SMTP端口", 
-                value=config["smtp_port"],
-                min_value=1, max_value=65535, step=1
-            )
-            sender_email = st.text_input(
-                "发件人邮箱", 
-                value=config["sender_email"],
-                placeholder="如：your_email@qq.com"
-            )
-            sender_auth_code = st.text_input(
-                "邮箱授权码", 
-                value=config["sender_auth_code"],
-                type="password",
-                placeholder="注意：不是登录密码，需在邮箱设置中开启SMTP并获取"
-            )
-        
-        # 右侧：收件人配置
-        with col2:
-            st.write("### 收件人配置")
-            receiver_email = st.text_input(
-                "收件人邮箱", 
-                value=config["receiver_email"],
-                placeholder="多个邮箱用英文逗号分隔，如：a@163.com,b@qq.com"
-            )
-            st.write("### 配置说明")
-            st.info("""
-            1. QQ邮箱：SMTP服务器=smtp.qq.com，端口=465，需开启POP3/SMTP并获取授权码
-            2. 163邮箱：SMTP服务器=smtp.163.com，端口=465，需开启SMTP并获取授权码
-            3. 企业邮箱：请联系邮箱管理员获取SMTP信息
-            """)
-        
-        # 表单按钮
+    # 2.3 邮箱配置（归到配置中心第三个标签页，和前两个同级）
+    with tab3:
+        st.subheader("邮件告警配置（监控触发时自动发送邮件）")
         st.divider()
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            save_btn = st.form_submit_button("💾 保存配置", type="primary")
-        with col_btn2:
-            test_btn = st.form_submit_button("📤 测试发送邮件")
-    
-    # 保存配置逻辑
-    if save_btn:
-        st.session_state.email_config = {
-            "smtp_server": smtp_server,
-            "smtp_port": smtp_port,
-            "sender_email": sender_email,
-            "sender_auth_code": sender_auth_code,
-            "receiver_email": receiver_email
-        }
-        st.success("邮箱配置保存成功！")
-    
-    # 测试邮件发送逻辑
-    if test_btn:
-        with st.spinner("正在发送测试邮件..."):
-            success, msg = send_test_email()
-        if success:
-            st.success(msg)
-        else:
-            st.error(msg)
-    
-    # 显示当前配置（方便核对）
-    st.divider()
-    st.write("### 当前已保存的配置")
-    st.write(f"- SMTP服务器：{config['smtp_server'] or '未配置'}")
-    st.write(f"- SMTP端口：{config['smtp_port']}")
-    st.write(f"- 发件人邮箱：{config['sender_email'] or '未配置'}")
-    st.write(f"- 收件人邮箱：{config['receiver_email'] or '未配置'}")
+        
+        # 加载已保存的配置
+        config = st.session_state.email_config
+        
+        # 配置表单（分组布局，清晰易填）
+        with st.form("email_config_form"):
+            col1, col2 = st.columns(2)
+            
+            # 左侧：SMTP服务器配置
+            with col1:
+                st.write("### 发件人邮箱配置")
+                smtp_server = st.text_input(
+                    "SMTP服务器", 
+                    value=config["smtp_server"],
+                    placeholder="如：smtp.qq.com / smtp.163.com"
+                )
+                smtp_port = st.number_input(
+                    "SMTP端口", 
+                    value=config["smtp_port"],
+                    min_value=1, max_value=65535, step=1
+                )
+                sender_email = st.text_input(
+                    "发件人邮箱", 
+                    value=config["sender_email"],
+                    placeholder="如：your_email@qq.com"
+                )
+                sender_auth_code = st.text_input(
+                    "邮箱授权码", 
+                    value=config["sender_auth_code"],
+                    type="password",
+                    placeholder="注意：不是登录密码，需在邮箱设置中开启SMTP并获取"
+                )
+            
+            # 右侧：收件人配置
+            with col2:
+                st.write("### 收件人配置")
+                receiver_email = st.text_input(
+                    "收件人邮箱", 
+                    value=config["receiver_email"],
+                    placeholder="多个邮箱用英文逗号分隔，如：a@163.com,b@qq.com"
+                )
+                st.write("### 配置说明")
+                st.info("""
+                1. QQ邮箱：SMTP服务器=smtp.qq.com，端口=465，需开启POP3/SMTP并获取授权码
+                2. 163邮箱：SMTP服务器=smtp.163.com，端口=465，需开启SMTP并获取授权码
+                3. 企业邮箱：请联系邮箱管理员获取SMTP信息
+                """)
+            
+            # 表单按钮
+            st.divider()
+            col_btn1, col_btn2 = st.columns(2)
+            with col_btn1:
+                save_btn = st.form_submit_button("💾 保存配置", type="primary")
+            with col_btn2:
+                test_btn = st.form_submit_button("📤 测试发送邮件")
+        
+        # 保存配置逻辑
+        if save_btn:
+            st.session_state.email_config = {
+                "smtp_server": smtp_server,
+                "smtp_port": smtp_port,
+                "sender_email": sender_email,
+                "sender_auth_code": sender_auth_code,
+                "receiver_email": receiver_email
+            }
+            st.success("邮箱配置保存成功！")
+        
+        # 测试邮件发送逻辑
+        if test_btn:
+            with st.spinner("正在发送测试邮件..."):
+                success, msg = send_test_email()
+            if success:
+                st.success(msg)
+            else:
+                st.error(msg)
+        
+        # 显示当前配置（方便核对）
+        st.divider()
+        st.write("### 当前已保存的配置")
+        st.write(f"- SMTP服务器：{config['smtp_server'] or '未配置'}")
+        st.write(f"- SMTP端口：{config['smtp_port']}")
+        st.write(f"- 发件人邮箱：{config['sender_email'] or '未配置'}")
+        st.write(f"- 收件人邮箱：{config['receiver_email'] or '未配置'}")
