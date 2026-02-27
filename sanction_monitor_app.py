@@ -22,7 +22,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ===================== 科技感冷灰配色UI（修复样式+隐藏按钮） =====================
+# ===================== 科技感冷灰配色UI =====================
 st.markdown("""
 <style>
 /* 全局深色科技背景 */
@@ -88,7 +88,7 @@ section[data-testid="stSidebar"] {
     color: #B0B0C0;
 }
 
-/* 按钮样式（统一对齐+无多余间距） */
+/* 按钮样式（统一对齐） */
 .stButton > button {
     background: linear-gradient(90deg, #5E6AD2, #4FD1C5);
     color: white;
@@ -98,29 +98,22 @@ section[data-testid="stSidebar"] {
     font-weight: 600;
     box-shadow: 0 3px 10px rgba(94,106,210,0.3);
     margin: 2px 0;
-    display: inline-block;
 }
 .stButton > button:hover {
     background: linear-gradient(90deg, #4FD1C5, #5E6AD2);
     box-shadow: 0 3px 15px rgba(94,106,210,0.5);
 }
-/* 隐藏触发按钮（核心修复：替代style参数） */
-.hidden-btn {
-    display: none !important;
-}
-/* 操作列小按钮（统一尺寸+对齐） */
-.op-btn {
-    padding: 4px 8px !important;
-    font-size: 12px !important;
-    margin: 0 2px !important;
-    width: 70px !important;
-}
 /* 删除按钮样式 */
 .del-btn {
     background: linear-gradient(90deg, #FF4D4F, #FF7875) !important;
 }
+/* 操作按钮组（紧凑排列） */
+.op-btn-group {
+    display: flex;
+    gap: 5px;
+}
 
-/* 表格样式（修复换行+对齐） */
+/* 表格样式 */
 .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -128,24 +121,20 @@ section[data-testid="stSidebar"] {
     border-radius: 8px;
     overflow: hidden;
     margin: 10px 0;
-    table-layout: fixed; /* 固定列宽，避免错乱 */
+    table-layout: fixed;
 }
 .data-table th {
     background: #5E6AD2;
     color: white;
     padding: 12px;
     text-align: left;
-    white-space: nowrap; /* 禁止表头换行 */
+    white-space: nowrap;
 }
 .data-table td {
     padding: 12px;
     border-bottom: 1px solid #33334F;
     color: #E0E0E0;
-    vertical-align: middle; /* 垂直居中 */
-    white-space: nowrap; /* 禁止单元格换行 */
-}
-.data-table td:last-child {
-    width: 160px; /* 操作列固定宽度，确保对齐 */
+    vertical-align: middle;
 }
 .data-table tr:hover {
     background: #2A2A3A;
@@ -179,6 +168,7 @@ section[data-testid="stSidebar"] {
     background: #222233 !important;
     border: 1px solid #5E6AD2 !important;
     border-radius: 8px !important;
+    margin: 10px 0;
 }
 .stExpanderHeader {
     background: #2A2A3A !important;
@@ -198,6 +188,8 @@ if "time_range_days" not in st.session_state:
     st.session_state.time_range_days = 30
 if "logs" not in st.session_state:
     st.session_state.logs = []
+
+# 主域名配置（默认4个）
 if "main_domains" not in st.session_state:
     st.session_state.main_domains = [
         {"id": str(uuid.uuid4()), "name": "商务部官网", "url": "https://www.mofcom.gov.cn/", "remark": ""},
@@ -205,14 +197,22 @@ if "main_domains" not in st.session_state:
         {"id": str(uuid.uuid4()), "name": "欧盟EEAS官网", "url": "https://eeas.europa.eu/", "remark": ""},
         {"id": str(uuid.uuid4()), "name": "中国出口管制信息网", "url": "https://www.ecrc.org.cn/", "remark": ""}
     ]
+
+# 关键词配置（默认10个，解决数量少问题）
 if "keywords" not in st.session_state:
     st.session_state.keywords = [
         {"id": str(uuid.uuid4()), "content": "制裁"},
         {"id": str(uuid.uuid4()), "content": "反制"},
         {"id": str(uuid.uuid4()), "content": "出口管制"},
         {"id": str(uuid.uuid4()), "content": "实体清单"},
-        {"id": str(uuid.uuid4()), "content": "sanctions"}
+        {"id": str(uuid.uuid4()), "content": "sanctions"},
+        {"id": str(uuid.uuid4()), "content": "export control"},
+        {"id": str(uuid.uuid4()), "content": "特别指定国民"},
+        {"id": str(uuid.uuid4()), "content": "SDN List"},
+        {"id": str(uuid.uuid4()), "content": "禁运"},
+        {"id": str(uuid.uuid4()), "content": "贸易限制"}
     ]
+
 if "email_config" not in st.session_state:
     st.session_state.email_config = {
         "smtp_server": "smtp.exmail.qq.com",
@@ -252,14 +252,17 @@ def extract_sub_links(url):
         return [url]
 
 def delete_domain(domain_id):
+    """删除指定ID的域名"""
     st.session_state.main_domains = [d for d in st.session_state.main_domains if d["id"] != domain_id]
     add_log(f"🗑️ 删除主域名：ID={domain_id}", "info")
 
 def delete_keyword(kw_id):
+    """删除指定ID的关键词"""
     st.session_state.keywords = [k for k in st.session_state.keywords if k["id"] != kw_id]
     add_log(f"🗑️ 删除关键词：ID={kw_id}", "info")
 
 def update_domain(domain_id, new_name, new_url, new_remark):
+    """更新指定ID的域名"""
     for d in st.session_state.main_domains:
         if d["id"] == domain_id:
             d["name"] = new_name
@@ -269,6 +272,7 @@ def update_domain(domain_id, new_name, new_url, new_remark):
             break
 
 def update_keyword(kw_id, new_content):
+    """更新指定ID的关键词"""
     for k in st.session_state.keywords:
         if k["id"] == kw_id:
             k["content"] = new_content
@@ -355,17 +359,18 @@ if st.session_state.active_page == "监控面板":
     st.markdown(f"<div class='log-area'>{log_html if log_html else '<div style=\"color:#B0B0C0;\">暂无日志</div>'}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ===================== 配置中心（核心修复：无换行+按钮对齐+无报错） =====================
+# ===================== 配置中心（核心重构：无多余按钮+按钮响应+布局对齐） =====================
 elif st.session_state.active_page == "配置中心":
     st.markdown("<div class='module-title'>⚙️ 配置中心</div>", unsafe_allow_html=True)
     tab1, tab2, tab3 = st.tabs(["🌐 主域名配置", "🔑 关键词配置", "📧 邮箱配置"])
     
-    # 1. 主域名配置（修复操作列换行+按钮对齐）
+    # 1. 主域名配置（重构：布局对齐+原生按钮操作）
     with tab1:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-title'>主域名管理</div>", unsafe_allow_html=True)
         
-        col1, col2, col3, col4 = st.columns([2, 3, 2, 1])
+        # 修复：列布局设置垂直对齐（bottom），解决输入框和按钮偏上问题
+        col1, col2, col3, col4 = st.columns([2, 3, 2, 1], vertical_alignment="bottom")
         with col1:
             new_domain_name = st.text_input("域名名称", placeholder="如：商务部官网", key="input_new_domain_name")
         with col2:
@@ -373,131 +378,160 @@ elif st.session_state.active_page == "配置中心":
         with col3:
             new_domain_remark = st.text_input("备注（可选）", placeholder="手动子链接，逗号分隔", key="input_new_domain_remark")
         with col4:
-            if st.button("➕ 添加", key="btn_add_domain", use_container_width=True):
-                if new_domain_name and new_domain_url:
-                    st.session_state.main_domains.append({
-                        "id": str(uuid.uuid4()),
-                        "name": new_domain_name,
-                        "url": new_domain_url,
-                        "remark": new_domain_remark
-                    })
-                    add_log(f"✅ 新增主域名：{new_domain_name}", "success")
-                    st.rerun()
-                else:
-                    st.error("❌ 名称和URL不能为空！")
+            add_btn = st.button("➕ 添加", key="btn_add_domain", use_container_width=True)
+        
+        # 添加域名逻辑
+        if add_btn:
+            if new_domain_name and new_domain_url:
+                st.session_state.main_domains.append({
+                    "id": str(uuid.uuid4()),
+                    "name": new_domain_name,
+                    "url": new_domain_url,
+                    "remark": new_domain_remark
+                })
+                add_log(f"✅ 新增主域名：{new_domain_name}", "success")
+                st.success(f"✅ 新增成功：{new_domain_name}")
+                st.rerun()  # 刷新页面
+            else:
+                st.error("❌ 名称和URL不能为空！")
         
         st.markdown("---")
         
+        # 域名列表展示 + 原生操作按钮（无多余触发按钮）
         if st.session_state.main_domains:
-            table_data = []
+            # 先展示表格（仅显示数据，无操作列）
+            domain_data = []
             for idx, domain in enumerate(st.session_state.main_domains):
-                edit_btn_key = f"btn_edit_domain_{domain['id']}"
-                del_btn_key = f"btn_del_domain_{domain['id']}"
-                # 修复：移除HTML中的换行/空格，避免显示\n
-                op_html = f"<button class='op-btn' onclick=\"document.getElementById('{edit_btn_key}').click()\">✏️ 修改</button><button class='op-btn del-btn' onclick=\"document.getElementById('{del_btn_key}').click()\">🗑️ 删除</button>"
-                table_data.append({
+                domain_data.append({
                     "序号": idx + 1,
                     "域名名称": domain["name"],
                     "URL": domain["url"],
-                    "备注": domain["remark"],
-                    "操作": op_html
+                    "备注": domain["remark"]
                 })
+            df_domains = pd.DataFrame(domain_data)
+            st.markdown(df_domains.to_html(index=False, classes="data-table"), unsafe_allow_html=True)
             
-            df_domains = pd.DataFrame(table_data)
-            st.markdown(df_domains.to_html(escape=False, index=False, classes="data-table"), unsafe_allow_html=True)
-            
-            # 修复：用CSS类hidden-btn替代style参数，解决TypeError
-            for domain in st.session_state.main_domains:
-                del_btn_key = f"btn_del_domain_{domain['id']}"
-                if st.button("删除触发", key=del_btn_key, type="secondary", help="", args=[], kwargs={}, disabled=False, use_container_width=False):
-                    delete_domain(domain["id"])
-                    st.success(f"✅ 删除成功：{domain['name']}")
-                    st.rerun()
-                # 给隐藏按钮加CSS类（核心修复）
-                st.markdown(f"""<style>div[data-testid="stButton"][key="{del_btn_key}"] {{display: none !important;}}</style>""", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top:15px;'><strong>操作区：</strong>选择要修改/删除的域名</div>", unsafe_allow_html=True)
+            # 为每个域名生成原生操作按钮（无隐藏、无多余）
+            for idx, domain in enumerate(st.session_state.main_domains):
+                st.markdown(f"<hr style='margin:10px 0;'>", unsafe_allow_html=True)
+                col_left, col_right = st.columns([8, 2])
+                with col_left:
+                    st.markdown(f"📌 {domain['name']} ({domain['url']})", unsafe_allow_html=True)
+                with col_right:
+                    # 操作按钮组（修改+删除）
+                    btn_col1, btn_col2 = st.columns(2, gap="small")
+                    with btn_col1:
+                        edit_btn = st.button(f"✏️ 修改", key=f"edit_domain_{domain['id']}", use_container_width=True)
+                    with btn_col2:
+                        del_btn = st.button(f"🗑️ 删除", key=f"del_domain_{domain['id']}", use_container_width=True, type="secondary")
                 
-                edit_btn_key = f"btn_edit_domain_{domain['id']}"
-                if st.button("修改触发", key=edit_btn_key, type="secondary", help="", args=[], kwargs={}, disabled=False, use_container_width=False):
+                # 修改域名逻辑
+                if edit_btn:
                     with st.expander(f"修改域名：{domain['name']}", expanded=True, key=f"exp_edit_domain_{domain['id']}"):
-                        new_name = st.text_input("新名称", value=domain["name"], key=f"input_edit_name_{domain['id']}")
-                        new_url = st.text_input("新URL", value=domain["url"], key=f"input_edit_url_{domain['id']}")
-                        new_remark = st.text_input("新备注", value=domain["remark"], key=f"input_edit_remark_{domain['id']}")
-                        if st.button("保存修改", key=f"btn_save_domain_{domain['id']}"):
+                        new_name = st.text_input("新名称", value=domain["name"], key=f"edit_name_{domain['id']}")
+                        new_url = st.text_input("新URL", value=domain["url"], key=f"edit_url_{domain['id']}")
+                        new_remark = st.text_input("新备注", value=domain["remark"], key=f"edit_remark_{domain['id']}")
+                        save_btn = st.button("💾 保存修改", key=f"save_domain_{domain['id']}")
+                        if save_btn:
                             if new_name and new_url:
                                 update_domain(domain["id"], new_name, new_url, new_remark)
                                 st.success(f"✅ 修改成功：{new_name}")
                                 st.rerun()
                             else:
                                 st.error("❌ 名称和URL不能为空！")
-                # 隐藏修改触发按钮
-                st.markdown(f"""<style>div[data-testid="stButton"][key="{edit_btn_key}"] {{display: none !important;}}</style>""", unsafe_allow_html=True)
+                
+                # 删除域名逻辑
+                if del_btn:
+                    delete_domain(domain["id"])
+                    st.success(f"✅ 删除成功：{domain['name']}")
+                    st.rerun()
         else:
             st.markdown("<div style='text-align:center; color:#B0B0C0; padding:20px;'>暂无主域名配置</div>", unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
     
-    # 2. 关键词配置（同修复逻辑）
+    # 2. 关键词配置（同重构逻辑：布局对齐+原生按钮+更多默认关键词）
     with tab2:
         st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
         st.markdown("<div class='card-title'>关键词管理</div>", unsafe_allow_html=True)
         
-        col1, col2 = st.columns([3, 1])
+        # 修复：输入框和按钮垂直对齐
+        col1, col2 = st.columns([3, 1], vertical_alignment="bottom")
         with col1:
             new_keyword = st.text_input("新增关键词", placeholder="如：制裁 / sanctions", key="input_new_keyword")
         with col2:
-            if st.button("➕ 添加", key="btn_add_keyword", use_container_width=True):
-                if new_keyword and new_keyword not in [k["content"] for k in st.session_state.keywords]:
+            add_kw_btn = st.button("➕ 添加", key="btn_add_keyword", use_container_width=True)
+        
+        # 添加关键词逻辑
+        if add_kw_btn:
+            if new_keyword:
+                # 检查是否重复
+                kw_list = [k["content"] for k in st.session_state.keywords]
+                if new_keyword not in kw_list:
                     st.session_state.keywords.append({
                         "id": str(uuid.uuid4()),
                         "content": new_keyword
                     })
                     add_log(f"✅ 新增关键词：{new_keyword}", "success")
+                    st.success(f"✅ 新增成功：{new_keyword}")
                     st.rerun()
-                elif new_keyword in [k["content"] for k in st.session_state.keywords]:
-                    st.error("❌ 关键词已存在！")
                 else:
-                    st.error("❌ 关键词不能为空！")
+                    st.error("❌ 关键词已存在！")
+            else:
+                st.error("❌ 关键词不能为空！")
         
         st.markdown("---")
         
+        # 关键词列表 + 原生操作按钮（无多余触发按钮）
         if st.session_state.keywords:
-            table_data = []
+            # 展示关键词表格
+            kw_data = []
             for idx, kw in enumerate(st.session_state.keywords):
-                edit_btn_key = f"btn_edit_kw_{kw['id']}"
-                del_btn_key = f"btn_del_kw_{kw['id']}"
-                # 修复：无换行的操作列HTML
-                op_html = f"<button class='op-btn' onclick=\"document.getElementById('{edit_btn_key}').click()\">✏️ 修改</button><button class='op-btn del-btn' onclick=\"document.getElementById('{del_btn_key}').click()\">🗑️ 删除</button>"
-                table_data.append({
+                kw_data.append({
                     "序号": idx + 1,
-                    "关键词内容": kw["content"],
-                    "操作": op_html
+                    "关键词内容": kw["content"]
                 })
+            df_kw = pd.DataFrame(kw_data)
+            st.markdown(df_kw.to_html(index=False, classes="data-table"), unsafe_allow_html=True)
             
-            df_kw = pd.DataFrame(table_data)
-            st.markdown(df_kw.to_html(escape=False, index=False, classes="data-table"), unsafe_allow_html=True)
-            
-            for kw in st.session_state.keywords:
-                del_btn_key = f"btn_del_kw_{kw['id']}"
-                if st.button("删除触发", key=del_btn_key, type="secondary"):
+            st.markdown("<div style='margin-top:15px;'><strong>操作区：</strong>选择要修改/删除的关键词</div>", unsafe_allow_html=True)
+            # 原生操作按钮
+            for idx, kw in enumerate(st.session_state.keywords):
+                st.markdown(f"<hr style='margin:10px 0;'>", unsafe_allow_html=True)
+                col_left, col_right = st.columns([8, 2])
+                with col_left:
+                    st.markdown(f"🔑 {kw['content']}", unsafe_allow_html=True)
+                with col_right:
+                    btn_col1, btn_col2 = st.columns(2, gap="small")
+                    with btn_col1:
+                        edit_kw_btn = st.button(f"✏️ 修改", key=f"edit_kw_{kw['id']}", use_container_width=True)
+                    with btn_col2:
+                        del_kw_btn = st.button(f"🗑️ 删除", key=f"del_kw_{kw['id']}", use_container_width=True, type="secondary")
+                
+                # 修改关键词逻辑
+                if edit_kw_btn:
+                    with st.expander(f"修改关键词：{kw['content']}", expanded=True, key=f"exp_edit_kw_{kw['id']}"):
+                        new_content = st.text_input("新关键词", value=kw["content"], key=f"edit_kw_content_{kw['id']}")
+                        save_kw_btn = st.button("💾 保存修改", key=f"save_kw_{kw['id']}")
+                        if save_kw_btn:
+                            if new_content:
+                                # 检查重复（排除自身）
+                                other_kw = [k["content"] for k in st.session_state.keywords if k["id"] != kw["id"]]
+                                if new_content not in other_kw:
+                                    update_keyword(kw["id"], new_content)
+                                    st.success(f"✅ 修改成功：{new_content}")
+                                    st.rerun()
+                                else:
+                                    st.error("❌ 关键词已存在！")
+                            else:
+                                st.error("❌ 关键词不能为空！")
+                
+                # 删除关键词逻辑
+                if del_kw_btn:
                     delete_keyword(kw["id"])
                     st.success(f"✅ 删除成功：{kw['content']}")
                     st.rerun()
-                st.markdown(f"""<style>div[data-testid="stButton"][key="{del_btn_key}"] {{display: none !important;}}</style>""", unsafe_allow_html=True)
-                
-                edit_btn_key = f"btn_edit_kw_{kw['id']}"
-                if st.button("修改触发", key=edit_btn_key, type="secondary"):
-                    with st.expander(f"修改关键词：{kw['content']}", expanded=True, key=f"exp_edit_kw_{kw['id']}"):
-                        new_content = st.text_input("新关键词", value=kw["content"], key=f"input_edit_kw_{kw['id']}")
-                        if st.button("保存修改", key=f"btn_save_kw_{kw['id']}"):
-                            if new_content and new_content not in [k["content"] for k in st.session_state.keywords if k["id"] != kw["id"]]:
-                                update_keyword(kw["id"], new_content)
-                                st.success(f"✅ 修改成功：{new_content}")
-                                st.rerun()
-                            elif new_content in [k["content"] for k in st.session_state.keywords if k["id"] != kw["id"]]:
-                                st.error("❌ 关键词已存在！")
-                            else:
-                                st.error("❌ 关键词不能为空！")
-                st.markdown(f"""<style>div[data-testid="stButton"][key="{edit_btn_key}"] {{display: none !important;}}</style>""", unsafe_allow_html=True)
         else:
             st.markdown("<div style='text-align:center; color:#B0B0C0; padding:20px;'>暂无关键词配置</div>", unsafe_allow_html=True)
         
@@ -576,7 +610,6 @@ elif st.session_state.active_page == "报表管理":
     with col1:
         filter_date = st.date_input("筛选日期", value=datetime.now(), key="input_filter_date")
     with col2:
-        st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🗑️ 清空所有报表", key="btn_clear_reports"):
             for f in os.listdir("."):
                 if f.endswith(".xlsx") and "制裁监控报表" in f:
@@ -587,36 +620,30 @@ elif st.session_state.active_page == "报表管理":
     
     report_files = [f for f in os.listdir(".") if f.endswith(".xlsx") and "制裁监控报表" in f]
     if report_files:
-        table_data = []
+        report_data = []
         for idx, file in enumerate(report_files):
             file_size = round(os.path.getsize(file) / 1024, 2)
             create_time = datetime.fromtimestamp(os.path.getctime(file)).strftime("%Y-%m-%d %H:%M:%S")
-            download_btn_key = f"btn_download_report_{idx}"
-            # 修复：无换行的操作列
-            op_html = f"<button class='op-btn' onclick=\"document.getElementById('{download_btn_key}').click()\">📥 下载</button>"
-            table_data.append({
+            report_data.append({
                 "序号": idx + 1,
                 "报表名称": file,
                 "文件大小(KB)": file_size,
-                "生成时间": create_time,
-                "操作": op_html
+                "生成时间": create_time
             })
+        df_reports = pd.DataFrame(report_data)
+        st.markdown(df_reports.to_html(index=False, classes="data-table"), unsafe_allow_html=True)
         
-        df_reports = pd.DataFrame(table_data)
-        st.markdown(df_reports.to_html(escape=False, index=False, classes="data-table"), unsafe_allow_html=True)
-        
-        for idx, file in enumerate(report_files):
-            download_btn_key = f"btn_download_report_{idx}"
+        # 下载按钮（原生，无隐藏）
+        st.markdown("<div style='margin-top:15px;'><strong>下载区：</strong></div>", unsafe_allow_html=True)
+        for file in report_files:
             with open(file, "rb") as f:
                 st.download_button(
-                    label="下载触发",
+                    label=f"📥 下载 {file}",
                     data=f,
                     file_name=file,
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    key=download_btn_key
+                    key=f"download_{file}"
                 )
-            # 隐藏下载触发按钮
-            st.markdown(f"""<style>div[data-testid="stButton"][key="{download_btn_key}"] {{display: none !important;}}</style>""", unsafe_allow_html=True)
     else:
         st.markdown("<div style='text-align:center; color:#B0B0C0; padding:20px;'>暂无报表文件</div>", unsafe_allow_html=True)
     
@@ -647,19 +674,20 @@ elif st.session_state.active_page == "系统日志":
             level_map = {"成功": "success", "错误": "error", "信息": "info"}
             filtered_logs = [log for log in st.session_state.logs if log[1] == level_map[log_level_filter]]
         
-        table_data = []
+        log_data = []
         for idx, (log_content, log_type) in enumerate(filtered_logs):
             log_type_cn = {"success": "成功", "error": "错误", "info": "信息"}[log_type]
-            table_data.append({
+            log_data.append({
                 "序号": idx + 1,
                 "日志内容": log_content,
-                "级别": log_type_cn,
-                "样式": f"log-{log_type}"
+                "级别": log_type_cn
             })
-        
+        df_logs = pd.DataFrame(log_data)
+        # 渲染带颜色的日志表格
         html_table = "<table class='data-table'><thead><tr><th>序号</th><th>日志内容</th><th>级别</th></tr></thead><tbody>"
-        for row in table_data:
-            html_table += f"<tr><td>{row['序号']}</td><td class='{row['样式']}'>{row['日志内容']}</td><td>{row['级别']}</td></tr>"
+        for idx, row in df_logs.iterrows():
+            log_type = level_map[row["级别"]] if row["级别"] != "所有" else "info"
+            html_table += f"<tr><td>{row['序号']}</td><td class='log-{log_type}'>{row['日志内容']}</td><td>{row['级别']}</td></tr>"
         html_table += "</tbody></table>"
         st.markdown(html_table, unsafe_allow_html=True)
     else:
