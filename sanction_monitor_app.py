@@ -14,11 +14,11 @@ st.set_page_config(
 )
 
 # ------------------------------
-# 简洁深色表格样式（仅做基础适配，保证表格标准、规整）
+# 简洁深色表格样式（核心：合法隐藏触发按钮）
 # ------------------------------
 st.markdown("""
 <style>
-/* 全局深色适配，无花哨样式 */
+/* 全局深色适配 */
 .stApp {
     background-color: #1E1E1E;
     color: #F0F0F0;
@@ -106,6 +106,14 @@ section[data-testid="stSidebar"] {
 .stTabs [aria-selected="true"] {
     color: #0078D4 !important;
     font-weight: bold;
+}
+
+/* 核心修复：合法隐藏触发按钮（替代非法的style参数） */
+button[data-testid="baseButton-secondary"][key^="edit_"],
+button[data-testid="baseButton-secondary"][key^="del_"],
+button[data-testid="baseButton-secondary"][key^="edit_kw_"],
+button[data-testid="baseButton-secondary"][key^="del_kw_"] {
+    display: none !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -238,9 +246,9 @@ elif st.session_state.active_page == "配置中心":
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            # 隐藏的触发按钮（功能核心，无视觉显示）
-            st.button("触发修改", key=f"edit_{domain['id']}", style={"display": "none"})
-            st.button("触发删除", key=f"del_{domain['id']}", style={"display": "none"})
+            # 修复：移除非法的style参数，改用CSS隐藏（无报错）
+            st.button("触发修改", key=f"edit_{domain['id']}")
+            st.button("触发删除", key=f"del_{domain['id']}")
         st.markdown('</div>', unsafe_allow_html=True)
 
         # 修改逻辑（标准弹窗）
@@ -306,9 +314,9 @@ elif st.session_state.active_page == "配置中心":
                 </div>
             </div>
             """, unsafe_allow_html=True)
-            # 隐藏触发按钮
-            st.button("触发修改kw", key=f"edit_kw_{kw['id']}", style={"display": "none"})
-            st.button("触发删除kw", key=f"del_kw_{kw['id']}", style={"display": "none"})
+            # 修复：移除非法的style参数，改用CSS隐藏（无报错）
+            st.button("触发修改kw", key=f"edit_kw_{kw['id']}")
+            st.button("触发删除kw", key=f"del_kw_{kw['id']}")
         st.markdown('</div>', unsafe_allow_html=True)
 
         # 修改逻辑
