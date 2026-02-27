@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import streamlit as st
-import pandas as pd
 import uuid
 
 # ------------------------------
-# 页面配置（极简，无花哨设置）
+# 页面基础配置（极简稳定）
 # ------------------------------
 st.set_page_config(
     page_title="制裁监控平台",
@@ -54,7 +53,7 @@ with st.sidebar:
     st.session_state.setdefault("page", "监控")
 
 # ------------------------------
-# 监控面板（原生组件，无样式）
+# 监控面板（原生组件）
 # ------------------------------
 if st.session_state.page == "监控":
     st.header("监控面板")
@@ -81,19 +80,19 @@ if st.session_state.page == "监控":
             st.rerun()
 
 # ------------------------------
-# 配置中心（原生表格+纯文字按钮）
+# 配置中心（核心：按钮内嵌表格行内）
 # ------------------------------
 elif st.session_state.page == "config":
     st.header("配置中心")
     tab1, tab2 = st.tabs(["主域名配置", "关键词配置"])
 
-    # 1. 主域名配置
+    # 1. 主域名配置（按钮内嵌表格行）
     with tab1:
         st.subheader("主域名管理")
         
-        # 新增域名（原生输入框）
-        new_name = st.text_input("域名名称")
-        new_url = st.text_input("域名URL")
+        # 新增域名
+        new_name = st.text_input("域名名称", placeholder="如：中国商务部官网")
+        new_url = st.text_input("域名URL", placeholder="https://...")
         if st.button("添加域名"):
             if new_name and new_url:
                 st.session_state.domains.append({"id": str(uuid.uuid4()), "name": new_name, "url": new_url})
@@ -103,31 +102,42 @@ elif st.session_state.page == "config":
         
         st.divider()
         
-        # 原生表格（用pandas创建，稳定无错）
-        df_domains = pd.DataFrame([
-            {"序号": i+1, "名称": d["name"], "URL": d["url"]} 
-            for i, d in enumerate(st.session_state.domains)
-        ])
-        st.dataframe(df_domains, use_container_width=True)
+        # 表格表头
+        header_col1, header_col2, header_col3, header_col4 = st.columns([0.8, 2, 4, 2])
+        header_col1.write("**序号**")
+        header_col2.write("**域名名称**")
+        header_col3.write("**URL**")
+        header_col4.write("**操作**")
+        st.divider()  # 表头分隔线
         
-        st.divider()
-        st.subheader("操作区")
-        
-        # 纯文字操作按钮（每行对应一个域名）
-        for d in st.session_state.domains:
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                if st.button(f"修改 {d['name']}", key=f"edit_{d['id']}"):
-                    st.session_state.edit_domain = d
-            with col2:
-                if st.button(f"删除 {d['name']}", key=f"del_{d['id']}"):
-                    st.session_state.domains = [x for x in st.session_state.domains if x["id"] != d["id"]]
+        # 表格内容（每行包含按钮，内嵌最后一列）
+        for idx, domain in enumerate(st.session_state.domains):
+            # 每行的列布局（和表头对应）
+            row_col1, row_col2, row_col3, row_col4 = st.columns([0.8, 2, 4, 2])
+            
+            # 第一列：序号
+            row_col1.write(idx + 1)
+            
+            # 第二列：域名名称
+            row_col2.write(domain["name"])
+            
+            # 第三列：URL
+            row_col3.write(domain["url"])
+            
+            # 第四列：操作按钮（内嵌行内，对应本行）
+            btn_col1, btn_col2 = row_col4.columns(2)
+            with btn_col1:
+                if st.button(f"修改", key=f"edit_domain_{domain['id']}"):
+                    st.session_state.edit_domain = domain
+            with btn_col2:
+                if st.button(f"删除", key=f"del_domain_{domain['id']}"):
+                    st.session_state.domains = [d for d in st.session_state.domains if d["id"] != domain["id"]]
                     st.rerun()
         
         # 修改域名弹窗
         if "edit_domain" in st.session_state:
             d = st.session_state.edit_domain
-            with st.form(f"form_edit_{d['id']}"):
+            with st.form(f"form_edit_domain_{d['id']}"):
                 st.subheader(f"修改域名：{d['name']}")
                 edit_name = st.text_input("新名称", value=d["name"])
                 edit_url = st.text_input("新URL", value=d["url"])
@@ -137,11 +147,12 @@ elif st.session_state.page == "config":
                     del st.session_state.edit_domain
                     st.rerun()
 
-    # 2. 关键词配置（逻辑同上）
+    # 2. 关键词配置（按钮内嵌表格行）
     with tab2:
         st.subheader("关键词管理")
         
-        new_kw = st.text_input("新增关键词")
+        # 新增关键词
+        new_kw = st.text_input("新增关键词", placeholder="如：制裁、sanctions")
         if st.button("添加关键词"):
             if new_kw:
                 st.session_state.keywords.append({"id": str(uuid.uuid4()), "word": new_kw})
@@ -151,31 +162,38 @@ elif st.session_state.page == "config":
         
         st.divider()
         
-        # 原生表格
-        df_keywords = pd.DataFrame([
-            {"序号": i+1, "关键词": k["word"]} 
-            for i, k in enumerate(st.session_state.keywords)
-        ])
-        st.dataframe(df_keywords, use_container_width=True)
+        # 表格表头
+        kw_header1, kw_header2, kw_header3 = st.columns([0.8, 5, 2])
+        kw_header1.write("**序号**")
+        kw_header2.write("**关键词**")
+        kw_header3.write("**操作**")
+        st.divider()  # 表头分隔线
         
-        st.divider()
-        st.subheader("操作区")
-        
-        # 纯文字操作按钮
-        for k in st.session_state.keywords:
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                if st.button(f"修改 {k['word']}", key=f"edit_kw_{k['id']}"):
-                    st.session_state.edit_kw = k
-            with col2:
-                if st.button(f"删除 {k['word']}", key=f"del_kw_{k['id']}"):
-                    st.session_state.keywords = [x for x in st.session_state.keywords if x["id"] != k["id"]]
+        # 表格内容（每行包含按钮）
+        for idx, kw in enumerate(st.session_state.keywords):
+            # 每行的列布局
+            row_col1, row_col2, row_col3 = st.columns([0.8, 5, 2])
+            
+            # 第一列：序号
+            row_col1.write(idx + 1)
+            
+            # 第二列：关键词
+            row_col2.write(kw["word"])
+            
+            # 第三列：操作按钮（内嵌行内）
+            btn_col1, btn_col2 = row_col3.columns(2)
+            with btn_col1:
+                if st.button(f"修改", key=f"edit_kw_{kw['id']}"):
+                    st.session_state.edit_kw = kw
+            with btn_col2:
+                if st.button(f"删除", key=f"del_kw_{kw['id']}"):
+                    st.session_state.keywords = [k for k in st.session_state.keywords if k["id"] != kw["id"]]
                     st.rerun()
         
         # 修改关键词弹窗
         if "edit_kw" in st.session_state:
             k = st.session_state.edit_kw
-            with st.form(f"form_kw_{k['id']}"):
+            with st.form(f"form_edit_kw_{k['id']}"):
                 st.subheader(f"修改关键词：{k['word']}")
                 edit_kw = st.text_input("新关键词", value=k["word"])
                 if st.form_submit_button("保存修改"):
